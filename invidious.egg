@@ -10,4 +10,7 @@
  (components
    (extension invidious
               (modules invidious)
-              (source invidious.scm))))
+              (source invidious.scm))
+   (extension invidious.v1
+              (modules invidious.v1)
+              (source invidious.v1.scm))))

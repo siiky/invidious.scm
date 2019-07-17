@@ -6,10 +6,10 @@
 *.scm#*
 .#*.scm
 
-invidious.build.sh
-invidious.import.scm
-invidious.import.so
-invidious.install.sh
-invidious.link
-invidious.so
-invidious.static.o
+*.build.sh
+*.import.scm
+*.import.so
+*.install.sh
+*.link
+*.so
+*.static.o
