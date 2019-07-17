@@ -5,3 +5,11 @@
 *.scm~
 *.scm#*
 .#*.scm
+
+invidious.build.sh
+invidious.import.scm
+invidious.import.so
+invidious.install.sh
+invidious.link
+invidious.so
+invidious.static.o

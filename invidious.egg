@@ -1,0 +1,13 @@
+; vim: ft=scheme
+((author "siiky")
+ (license "unlicense")
+ (synopsis "Invidious API for Scheme")
+ (version "0.0.1")
+ (dependencies
+   srfi-13
+   uri-common)
+ (component-options (csc-options "-O0" "-d3"))
+ (components
+   (extension invidious
+              (modules invidious)
+              (source invidious.scm))))
