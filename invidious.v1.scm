@@ -78,7 +78,7 @@
     (if (not fields)
         '()
         (fields-parms
-          (if (list? fields) fields (fields)))))
+          (if (list? fields) fields (*fields*)))))
 
   ;; @brief Transform pretty? into a parameter list, ready to be passed to
   ;;        form-urlencode
