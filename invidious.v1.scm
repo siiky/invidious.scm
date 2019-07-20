@@ -4,11 +4,15 @@
    *fields*
    *instance*
    *pretty?*
+
    api-url
    fields-parms
    optional-fields-parms
    pretty?-parms
+
+   channels
    search
+   suggestions
    )
 
   (import
@@ -18,9 +22,13 @@
           make-parameter
           sub1)
     (only chicken.string
-          ->string))
+          ->string)
+    chicken.type)
 
   (import
+    (only srfi-1
+          filter
+          map)
     (only srfi-13
           string-join)
     (only uri-common
@@ -87,6 +95,13 @@
   (define (pretty?-parms pretty?)
     (if pretty? '((pretty . 1)) '()))
 
+  ;; @brief Filter parameters not given
+  ;; @param parms An alist of parameters
+  ;; @returns A new alist (possibly empty) with the given parameters
+  (: filter-parms ((list-of (pair symbol (or false string))) --> (list-of (pair symbol string))))
+  (define (filter-parms parms)
+    (filter cdr parms))
+
   ;; @brief Appends all parameter lists into a single parameter list, ready to
   ;;        be passed to form-urlencode
   ;; @param parms Other parameters
@@ -112,8 +127,9 @@
   ;; @brief Makes the base API URL, optionally with a command
   ;; @param command The command
   ;; @returns The base API URL
-  (define (api-url #!optional (command ""))
-    (string-append (*instance*) "api/v1/" command))
+  (define (api-url #!optional (command "") (id/ucid ""))
+    ; FIXME: command="" & id/ucid="" => "<instance>/api/v1//"
+    (string-append (*instance*) "api/v1/" command "/" id/ucid))
 
   ;;;
   ;;; Command functions
@@ -126,14 +142,48 @@
   ;;;     JSON response; defaults to the `*pretty?*` parameter, if not given
   ;;;
 
-  ;; @brief Makes a search URL for a given search string
-  ;; @param q The search string
-  ;; @returns A search URL for @a q
-  (define (search #!optional (q #f)
-                  #!key (fields (*fields*)) (pretty? (*pretty?*)))
+  ; TODO: Learn macros. Read https://api.call-cc.org/5/doc/chicken/syntax,
+  ;       https://wiki.call-cc.org/man/4/Macros and the rest-bind egg
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelsucid
+  (define (channels ucid #!key
+                    (sort_by #f)
+                    (fields (*fields*))
+                    (pretty? (*pretty?*)))
+    (let ((base (api-url "channels" ucid))
+          (parms (filter-parms `((sort_by . ,sort_by)))))
+      (make-query-url base parms fields pretty?)))
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1search
+  (define (search #!key
+                  (date #f)
+                  (duration #f)
+                  (features #f)
+                  (page #f)
+                  (q #f)
+                  (region #f)
+                  (sort_by #f)
+                  (type #f)
+                  (fields (*fields*))
+                  (pretty? (*pretty?*)))
     (let ((base (api-url "search"))
-          (parms `((q . ,q))))
-      (if q
-          (make-query-url base parms fields pretty?)
-          base)))
+          (parms (filter-parms
+                   `((date . ,date)
+                     (duration . ,duration)
+                     (features . ,features)
+                     (page . ,page)
+                     (q . ,q)
+                     (region . ,region)
+                     (sort_by . ,sort_by)
+                     (type . ,type)))))
+      (make-query-url base parms fields pretty?)))
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1searchsuggestions
+  (define (suggestions #!key
+                       (q #f)
+                       (fields (*fields*))
+                       (pretty? (*pretty?*)))
+    (let ((base (api-url "suggestions"))
+          (parms (filter-parms `((q . ,q)))))
+      (make-query-url base parms fields pretty?)))
   )
