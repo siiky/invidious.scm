@@ -142,8 +142,11 @@
   ;;;     JSON response; defaults to the `*pretty?*` parameter, if not given
   ;;;
 
-  ; TODO: Learn macros. Read https://api.call-cc.org/5/doc/chicken/syntax,
-  ;       https://wiki.call-cc.org/man/4/Macros and the rest-bind egg
+  ; TODO: Learn macros. Reading material:
+  ;  * https://api.call-cc.org/5/doc/chicken/syntax,
+  ;  * https://wiki.call-cc.org/man/4/Macros
+  ;  * https://wiki.call-cc.org/explicit-renaming-macros
+  ;  * [rest-bind](https://bitbucket.org/knodium/rest-bind/raw/master/rest-bind.scm)
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelsucid
   (define (channels ucid #!key
