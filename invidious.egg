@@ -10,6 +10,7 @@
  (component-options (csc-options "-O0" "-d3"))
  (components
    (extension invidious
+              (component-dependencies invidious.v1)
               (modules invidious)
               (source invidious.scm))
    (extension invidious.v1
