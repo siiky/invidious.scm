@@ -122,7 +122,8 @@
   ;; @returns A complete query URL
   (define (make-query-url base parms fields pretty?)
     (let ((final-parms (combine-parms parms fields pretty?)))
-      (string-append base "?" (form-urlencode final-parms))))
+      (let ((encoded-parms (form-urlencode final-parms)))
+        (string-append base "?" (or encoded-parms "")))))
 
   ;; @brief Makes the base API URL, optionally with a command
   ;; @param command The command
@@ -142,51 +143,28 @@
   ;;;     JSON response; defaults to the `*pretty?*` parameter, if not given
   ;;;
 
-  ; TODO: Learn macros. Reading material:
-  ;  * https://api.call-cc.org/5/doc/chicken/syntax,
-  ;  * https://wiki.call-cc.org/man/4/Macros
-  ;  * https://wiki.call-cc.org/explicit-renaming-macros
-  ;  * [rest-bind](https://bitbucket.org/knodium/rest-bind/raw/master/rest-bind.scm)
+  (define-syntax make-pre-parms
+    (syntax-rules ()
+      ((make-pre-parms ret)
+       ret)
+      ((make-pre-parms ret h t ...)
+       (make-pre-parms (cons (cons 'h h) ret) t ...))))
+
+  (define-syntax define-iv
+    (syntax-rules ()
+      ; TODO: `mandarory ...` should be a single optional arg
+      ((define-iv cmd-name cmd-str (keys ...) mandatory ...)
+       (define (cmd-name mandatory ... #!key (fields (*fields*)) (pretty? (*pretty?*)) keys ...)
+         (let ((base (api-url cmd-str mandatory ...))
+               (parms (filter-parms (make-pre-parms '() keys ...))))
+           (make-query-url base parms fields pretty?))))))
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelsucid
-  (define (channels ucid #!key
-                    (sort_by #f)
-                    (fields (*fields*))
-                    (pretty? (*pretty?*)))
-    (let ((base (api-url "channels" ucid))
-          (parms (filter-parms `((sort_by . ,sort_by)))))
-      (make-query-url base parms fields pretty?)))
+  (define-iv channels "channels" (sort_by) ucid)
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1search
-  (define (search #!key
-                  (date #f)
-                  (duration #f)
-                  (features #f)
-                  (page #f)
-                  (q #f)
-                  (region #f)
-                  (sort_by #f)
-                  (type #f)
-                  (fields (*fields*))
-                  (pretty? (*pretty?*)))
-    (let ((base (api-url "search"))
-          (parms (filter-parms
-                   `((date . ,date)
-                     (duration . ,duration)
-                     (features . ,features)
-                     (page . ,page)
-                     (q . ,q)
-                     (region . ,region)
-                     (sort_by . ,sort_by)
-                     (type . ,type)))))
-      (make-query-url base parms fields pretty?)))
+  (define-iv search "search" (date duration features page q region sort_by type))
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1searchsuggestions
-  (define (suggestions #!key
-                       (q #f)
-                       (fields (*fields*))
-                       (pretty? (*pretty?*)))
-    (let ((base (api-url "suggestions"))
-          (parms (filter-parms `((q . ,q)))))
-      (make-query-url base parms fields pretty?)))
+  (define-iv suggestions "suggestions" (q))
   )
