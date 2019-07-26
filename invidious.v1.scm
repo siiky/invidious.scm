@@ -29,7 +29,6 @@
   (import
     scheme
     (only chicken.base
-     print
           assert
           compose
           make-parameter
@@ -56,32 +55,33 @@
   ;;        passed to form-urlencode
   ;; @param fields A list of fields
   ;; @returns A parameter list, ready to be passed to form-urlencode
-  (define (fields-parms fields)
+  (define (fields-parm fields)
     (if (null? fields)
         '()
         `((fields . ,(string-join (map ->string fields) ",")))))
+
+  ;; @brief Clean an optional fields parameter
+  ;; @param fields #f or a list of strings or symbols
+  ;; @param A (possibly empty) listp of strings or symbols
+  (define (sanitize-optional-fields-parm fields)
+    (assert
+      (or (not fields)
+          (list? fields))
+      "`*fields*` must be `#f` or a (posibly empty) list of strings or symbols")
+    (or fields '()))
 
   ;; @brief Transforms an optional field list into a parameter list, ready to
   ;;        be passed to form-urlencode
   ;; @param fields #f or a list of fields
   ;; @returns A parameter list, ready to be passed to form-urlencode
   (define (optional-fields-parm fields)
-    (assert
-      (or (not fields)
-          (list? fields))
-      "`*fields*` must be `#f` or a (posibly empty) list of strigs or symbols")
-    (if fields
-        (fields-parms
-          (if (list? fields)
-              fields
-              (*fields*)))
-        '()))
+    (fields-parm (sanitize-optional-fields-parm fields)))
 
   ;; @brief Transform pretty? into a parameter list, ready to be passed to
   ;;        form-urlencode
   ;; @param pretty? #f or non-#f
   ;; @returns The singleton list with the '(pretty . 1) pair, or the epty list
-  (define (pretty?-parms pretty?)
+  (define (pretty?-parm pretty?)
     (if pretty? '((pretty . 1)) '()))
 
   ;; @brief Filter parameters not given
@@ -98,9 +98,9 @@
   ;; @param pretty? The pretty? flag
   ;; @returns A parameter list, ready to be passed to form-urlencode
   (define (combine-parms parms fields-optional pretty?)
-    (let ((fields-parms (optional-fields-parm fields-optional))
-          (pretty?-parms (pretty?-parms pretty?)))
-      (append fields-parms pretty?-parms parms)))
+    (let ((fields-parm (optional-fields-parm fields-optional))
+          (pretty?-parm (pretty?-parm pretty?)))
+      (append pretty?-parm fields-parm parms)))
 
   ;; @brief Makes a complete query URL
   ;; @param base The base request URL, made by concatenating the instance URL,
@@ -110,7 +110,6 @@
   ;; @param pretty? The pretty? flag
   ;; @returns A complete query URL
   (define (make-query-url base parms fields pretty?)
-    (print fields)
     (let ((parms (combine-parms parms fields pretty?)))
       (string-append base "?" (or (form-urlencode parms) ""))))
 
@@ -132,7 +131,7 @@
   ;; @brief The fields of the response one is interested in
   ;; @see https://github.com/omarroth/invidious/wiki/API#fields
   ;; @see https://developers.google.com/youtube/v3/getting-started#fields
-  (define *fields* (make-parameter #f optional-fields-parm))
+  (define *fields* (make-parameter '() sanitize-optional-fields-parm))
 
   ;; @brief The instance to use
   ;; @see https://github.com/omarroth/invidious/wiki/Invidious-Instances
@@ -171,9 +170,8 @@
   ;;     (example positional #!key (fields (*fields*)) (pretty? (*pretty?*)) (key1 #f) (key2 #f))
   (define-syntax define-iv
     (syntax-rules ()
-      ; FIXME: Fields parameter goes with parens
       ((define-iv str (name pos1 pos2 too-many ...) key ...)
-       (syntax-error 'here "Too many positional arguments"))
+       (syntax-error "There must be at most one positional argument"))
       ((define-iv str (name positional ...) key ...)
        (define (name positional ... #!key (fields (*fields*)) (pretty? (*pretty?*)) (key #f) ...)
          (let ((base (api-url str positional ...))
