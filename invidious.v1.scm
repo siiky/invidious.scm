@@ -170,68 +170,68 @@
   ;;     (example positional #!key (fields (*fields*)) (pretty? (*pretty?*)) (key1 #f) (key2 #f))
   (define-syntax define-iv
     (syntax-rules ()
-      ((define-iv str (name pos1 pos2 too-many ...) key ...)
+      ((define-iv (name pos1 pos2 too-many ...) key ...)
        (syntax-error "There must be at most one positional argument"))
-      ((define-iv str (name positional ...) key ...)
+      ((define-iv (name positional ...) key ...)
        (define (name positional ... #!key (fields (*fields*)) (pretty? (*pretty?*)) (key #f) ...)
-         (let ((base (api-url str positional ...))
+         (let ((base (api-url (symbol->string 'name) positional ...))
                (parms (filter-parms `((key . ,key) ...))))
            (make-query-url base parms fields pretty?))))))
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1stats
-  (define-iv "stats" (stats))
+  (define-iv (stats))
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1videosid
-  (define-iv "videos" (videos id) region)
+  (define-iv (videos id) region)
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1annotationsid
-  (define-iv "annotations" (annotations id) source)
+  (define-iv (annotations id) source)
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1commentsid
-  (define-iv "comments" (comments id) sort_by source continuation)
+  (define-iv (comments id) sort_by source continuation)
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1insightsid
-  (define-iv "insights" (insights))
+  (define-iv (insights))
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1captionsid
-  (define-iv "captions" (captions id) label lang tlang region)
+  (define-iv (captions id) label lang tlang region)
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1trending
-  (define-iv "trending" (trending) type region)
+  (define-iv (trending) type region)
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1top
-  (define-iv "top" (top))
+  (define-iv (top))
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1popular
-  (define-iv "popular" (popular))
+  (define-iv (popular))
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelsucid
-  (define-iv "channels" (channels ucid) sort_by)
+  (define-iv (channels ucid) sort_by)
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelsucidvideos-apiv1channelsvideosucid
-  (define-iv "channels/videos" (channels/videos ucid) page sort_by)
+  (define-iv (channels/videos ucid) page sort_by)
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelsucidlatest-apiv1channelslatestucid
-  (define-iv "channels/latest" (channels/latest))
+  (define-iv (channels/latest))
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelsplaylistsucid-apiv1channelsucidplaylists
-  (define-iv "channels/playlists" (channels/playlists ucid) continuation sort_by)
+  (define-iv (channels/playlists ucid) continuation sort_by)
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelscommentsucid-apiv1channelsucidcomments
-  (define-iv "channels/comments" (channels/comments ucid) continuation)
+  (define-iv (channels/comments ucid) continuation)
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelssearchucid
-  (define-iv "channels/search" (channels/search ucid) q page)
+  (define-iv (channels/search ucid) q page)
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1searchsuggestions
-  (define-iv "suggestions" (suggestions) q)
+  (define-iv (suggestions) q)
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1search
-  (define-iv "search" (search) q page sort_by date duration type features region)
+  (define-iv (search) q page sort_by date duration type features region)
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1playlistsplid
-  (define-iv "playlists" (playlists plid) page)
+  (define-iv (playlists plid) page)
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1mixesrdid
-  (define-iv "mixes" (mixes rdid))
+  (define-iv (mixes rdid))
   )
