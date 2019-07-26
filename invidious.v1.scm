@@ -5,24 +5,38 @@
    *instance*
    *pretty?*
 
-   api-url
-   fields-parms
-   optional-fields-parms
-   pretty?-parms
-
+   annotations
+   captions
    channels
+   channels/comments
+   channels/latest
+   channels/playlists
+   channels/search
+   channels/videos
+   comments
+   insights
+   mixes
+   playlists
+   popular
    search
+   stats
    suggestions
+   top
+   trending
+   videos
    )
 
   (import
     scheme
     (only chicken.base
+     print
           assert
+          compose
           make-parameter
           sub1)
     (only chicken.string
           ->string)
+    chicken.syntax
     chicken.type)
 
   (import
@@ -33,37 +47,6 @@
           string-join)
     (only uri-common
           form-urlencode))
-
-  ;;;
-  ;;; Configuration parameters
-  ;;;
-
-  ;; @brief Pretty-print response JSON
-  ;; @see https://github.com/omarroth/invidious/wiki/API#pretty
-  (define *pretty?* (make-parameter #f (lambda (x) (not (not x)))))
-
-  ;; @brief The fields of the response one is interested in
-  ;; @see https://github.com/omarroth/invidious/wiki/API#fields
-  ;; @see https://developers.google.com/youtube/v3/getting-started#fields
-  (define *fields*
-    (make-parameter
-      #f
-      (lambda (df)
-        (assert (or (not df)
-                    (list? df))
-                "`*fields*` must be `#f` or a (posibly empty) list of strigs or symbols")
-        (or df '()))))
-
-  ;; @brief The instance to use
-  ;; @see https://github.com/omarroth/invidious/wiki/Invidious-Instances
-  (define *instance*
-    (make-parameter
-      "https://invidio.us/"
-      (lambda (str)
-        (assert (string? str) "`*instance*` must be a string")
-        (if (char=? #\/ (string-ref str (sub1 (string-length str))))
-            str
-            (string-append str "/")))))
 
   ;;;
   ;;; General & Utility functions
@@ -82,11 +65,17 @@
   ;;        be passed to form-urlencode
   ;; @param fields #f or a list of fields
   ;; @returns A parameter list, ready to be passed to form-urlencode
-  (define (optional-fields-parms fields)
-    (if (not fields)
-        '()
+  (define (optional-fields-parm fields)
+    (assert
+      (or (not fields)
+          (list? fields))
+      "`*fields*` must be `#f` or a (posibly empty) list of strigs or symbols")
+    (if fields
         (fields-parms
-          (if (list? fields) fields (*fields*)))))
+          (if (list? fields)
+              fields
+              (*fields*)))
+        '()))
 
   ;; @brief Transform pretty? into a parameter list, ready to be passed to
   ;;        form-urlencode
@@ -109,7 +98,7 @@
   ;; @param pretty? The pretty? flag
   ;; @returns A parameter list, ready to be passed to form-urlencode
   (define (combine-parms parms fields-optional pretty?)
-    (let ((fields-parms (optional-fields-parms fields-optional))
+    (let ((fields-parms (optional-fields-parm fields-optional))
           (pretty?-parms (pretty?-parms pretty?)))
       (append fields-parms pretty?-parms parms)))
 
@@ -121,16 +110,40 @@
   ;; @param pretty? The pretty? flag
   ;; @returns A complete query URL
   (define (make-query-url base parms fields pretty?)
-    (let ((final-parms (combine-parms parms fields pretty?)))
-      (let ((encoded-parms (form-urlencode final-parms)))
-        (string-append base "?" (or encoded-parms "")))))
+    (print fields)
+    (let ((parms (combine-parms parms fields pretty?)))
+      (string-append base "?" (or (form-urlencode parms) ""))))
 
   ;; @brief Makes the base API URL, optionally with a command
   ;; @param command The command
   ;; @returns The base API URL
   (define (api-url #!optional (command "") (id/ucid ""))
     ; FIXME: command="" & id/ucid="" => "<instance>/api/v1//"
-    (string-append (*instance*) "api/v1/" command "/" id/ucid))
+    (string-append (*instance*) "api/v1/" command "/" (->string id/ucid)))
+
+  ;;;
+  ;;; Configuration parameters
+  ;;;
+
+  ;; @brief Pretty-print JSON response?
+  ;; @see https://github.com/omarroth/invidious/wiki/API#pretty
+  (define *pretty?* (make-parameter #f (compose not not)))
+
+  ;; @brief The fields of the response one is interested in
+  ;; @see https://github.com/omarroth/invidious/wiki/API#fields
+  ;; @see https://developers.google.com/youtube/v3/getting-started#fields
+  (define *fields* (make-parameter #f optional-fields-parm))
+
+  ;; @brief The instance to use
+  ;; @see https://github.com/omarroth/invidious/wiki/Invidious-Instances
+  (define *instance*
+    (make-parameter
+      "https://invidio.us/"
+      (lambda (str)
+        (assert (string? str) "`*instance*` must be a string")
+        (if (char=? #\/ (string-ref str (sub1 (string-length str))))
+            str
+            (string-append str "/")))))
 
   ;;;
   ;;; Command functions
@@ -143,28 +156,84 @@
   ;;;     JSON response; defaults to the `*pretty?*` parameter, if not given
   ;;;
 
-  (define-syntax make-pre-parms
-    (syntax-rules ()
-      ((make-pre-parms ret)
-       ret)
-      ((make-pre-parms ret h t ...)
-       (make-pre-parms (cons (cons 'h h) ret) t ...))))
-
+  ;; @brief Define an Invidious API call
+  ;; @param name The name of the functions to define
+  ;; @param str The string to append to the API URL
+  ;; @param keys The key parameters of the API call
+  ;; @param mandarory Zero or more mandatory arguments (usually ID)
+  ;;
+  ;; Defines a function named @a name, that takes @a mandarory mandatory
+  ;; arguments and @a keys key arguments, and returns a complete URL to make a
+  ;; request.
+  ;;
+  ;; Example:
+  ;; #;> (define-iv (example positional) key1 key2)
+  ;;     (example positional #!key (fields (*fields*)) (pretty? (*pretty?*)) (key1 #f) (key2 #f))
   (define-syntax define-iv
     (syntax-rules ()
-      ; TODO: `mandarory ...` should be a single optional arg
-      ((define-iv cmd-name cmd-str (keys ...) mandatory ...)
-       (define (cmd-name mandatory ... #!key (fields (*fields*)) (pretty? (*pretty?*)) keys ...)
-         (let ((base (api-url cmd-str mandatory ...))
-               (parms (filter-parms (make-pre-parms '() keys ...))))
+      ; FIXME: Fields parameter goes with parens
+      ((define-iv str (name pos1 pos2 too-many ...) key ...)
+       (syntax-error 'here "Too many positional arguments"))
+      ((define-iv str (name positional ...) key ...)
+       (define (name positional ... #!key (fields (*fields*)) (pretty? (*pretty?*)) (key #f) ...)
+         (let ((base (api-url str positional ...))
+               (parms (filter-parms `((key . ,key) ...))))
            (make-query-url base parms fields pretty?))))))
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelsucid
-  (define-iv channels "channels" (sort_by) ucid)
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1stats
+  (define-iv "stats" (stats))
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1search
-  (define-iv search "search" (date duration features page q region sort_by type))
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1videosid
+  (define-iv "videos" (videos id) region)
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1annotationsid
+  (define-iv "annotations" (annotations id) source)
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1commentsid
+  (define-iv "comments" (comments id) sort_by source continuation)
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1insightsid
+  (define-iv "insights" (insights))
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1captionsid
+  (define-iv "captions" (captions id) label lang tlang region)
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1trending
+  (define-iv "trending" (trending) type region)
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1top
+  (define-iv "top" (top))
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1popular
+  (define-iv "popular" (popular))
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelsucid
+  (define-iv "channels" (channels ucid) sort_by)
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelsucidvideos-apiv1channelsvideosucid
+  (define-iv "channels/videos" (channels/videos ucid) page sort_by)
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelsucidlatest-apiv1channelslatestucid
+  (define-iv "channels/latest" (channels/latest))
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelsplaylistsucid-apiv1channelsucidplaylists
+  (define-iv "channels/playlists" (channels/playlists ucid) continuation sort_by)
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelscommentsucid-apiv1channelsucidcomments
+  (define-iv "channels/comments" (channels/comments ucid) continuation)
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelssearchucid
+  (define-iv "channels/search" (channels/search ucid) q page)
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1searchsuggestions
-  (define-iv suggestions "suggestions" (q))
+  (define-iv "suggestions" (suggestions) q)
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1search
+  (define-iv "search" (search) q page sort_by date duration type features region)
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1playlistsplid
+  (define-iv "playlists" (playlists plid) page)
+
+  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1mixesrdid
+  (define-iv "mixes" (mixes rdid))
   )
