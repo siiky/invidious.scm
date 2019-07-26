@@ -159,10 +159,10 @@
   ;; @param name The name of the functions to define
   ;; @param str The string to append to the API URL
   ;; @param keys The key parameters of the API call
-  ;; @param mandarory Zero or more mandatory arguments (usually ID)
+  ;; @param positional One optional (one or none) positional argument
   ;;
-  ;; Defines a function named @a name, that takes @a mandarory mandatory
-  ;; arguments and @a keys key arguments, and returns a complete URL to make a
+  ;; Defines a function named @a name, that takes @a positional positional
+  ;; argument and @a keys key arguments, and returns a complete URL to make a
   ;; request.
   ;;
   ;; Example:
