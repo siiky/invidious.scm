@@ -200,7 +200,7 @@
       ((define-iv (name positional ...) key ...)
        (define (name positional ... #!key (fields (*fields*)) (pretty? (*pretty?*)) (key #f) ...)
          (let ((parms (filter-parms `((key . ,key) ...))))
-           (make-query-url 'name parms fields pretty? '(positional ...)))))))
+           (make-query-url 'name parms fields pretty? `(,positional ...)))))))
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1stats
   (define-iv (stats))

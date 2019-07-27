@@ -4,15 +4,30 @@
  (synopsis "Invidious API for Scheme")
  (version "0.0.1")
  (dependencies
+   http-client
+   json
+   openssl
    srfi-1
    srfi-13
+   ssax
    uri-common)
  (component-options (csc-options "-O0" "-d3"))
  (components
+   (extension invidious.req
+              (component-dependencies invidious.req.v1)
+              (modules invidious.req)
+              (source invidious.req.scm))
+
+   (extension invidious.req.v1
+              (component-dependencies invidious.uri.v1)
+              (modules invidious.req.v1)
+              (source invidious.req.v1.scm))
+
    (extension invidious.uri
               (component-dependencies invidious.uri.v1)
               (modules invidious.uri)
               (source invidious.uri.scm))
+
    (extension invidious.uri.v1
               (modules invidious.uri.v1)
               (source invidious.uri.v1.scm))))
