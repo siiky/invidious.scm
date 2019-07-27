@@ -12,8 +12,7 @@
     (only chicken.base
           assert
           compose
-          make-parameter
-          sub1)
+          make-parameter)
     (only chicken.module
           export)
     (only chicken.string

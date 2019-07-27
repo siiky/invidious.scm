@@ -6,11 +6,6 @@
 
   (import
     scheme
-    (only chicken.base
-          assert
-          compose
-          make-parameter
-          sub1)
     (only chicken.eval
           module-environment)
     (only chicken.keyword
@@ -18,9 +13,6 @@
     (only chicken.module
           export
           reexport)
-    (only chicken.string
-          ->string
-          string-split)
     chicken.syntax
     chicken.type)
 
@@ -29,12 +21,6 @@
           with-input-from-request)
     (only json
           json-read)
-    (only srfi-1
-          concatenate
-          filter
-          map)
-    (only srfi-13
-          string-join)
     (only ssax
           ssax:xml->sxml)
     openssl)
@@ -51,15 +37,37 @@
           *pretty?*
           *scheme*))
 
+  ;; @brief Convert a symbol to a keyword
   (define (symbol->keyword s)
     (string->keyword (symbol->string s)))
 
+  ;; @brief Call the function named @a fun from module invidious.uri.v1 with
+  ;;     arguments @a args
+  ;; @param fun A symbol naming a function in the module invidious.uri.v1
+  ;; @param args A list of arguments for @a fun
+  ;; @returns The result of (apply fun args)
   (define (call fun args)
     (apply (eval fun (module-environment 'invidious.uri.v1)) args))
 
-  (define (sxml-read)
-    (ssax:xml->sxml (current-input-port) '()))
+  ;; @brief Read an XML structure from @a port and convert it to SXML
+  ;; @param port A port to read XML from
+  ;; @returns SXML read from @a port
+  (define (sxml-read #!optional (port (current-input-port)))
+    (ssax:xml->sxml port '()))
 
+  ;; @brief Define an Invidious API call
+  ;; @param default-reader The default reader procedure for with-input-from-request
+  ;; @param name The name of the functions to define
+  ;; @param keys The key parameters of the API call
+  ;; @param positional Optional (zero or one) positional argument
+  ;;
+  ;; Defines a function named @a name, that takes @a positional positional
+  ;; argument and @a keys key arguments, and makes an HTTP call with
+  ;; with-input-from-request
+  ;;
+  ;; Example:
+  ;; #;> (define-iv read-string (example positional) key1 key2)
+  ;;     (example positional #!key (reader read-string) (fields (*fields*)) (pretty? (*pretty?*)) (key1 #f) (key2 #f))
   (define-syntax define-iv
     (syntax-rules ()
       ((define-iv default-reader (name pos1 pos2 too-many ...) key ...)
