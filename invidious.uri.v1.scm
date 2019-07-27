@@ -5,26 +5,6 @@
    *host*
    *pretty?*
    *scheme*
-
-   annotations
-   captions
-   channels
-   channels/comments
-   channels/latest
-   channels/playlists
-   channels/search
-   channels/videos
-   comments
-   insights
-   mixes
-   playlists
-   popular
-   search
-   stats
-   suggestions
-   top
-   trending
-   videos
    )
 
   (import
@@ -34,6 +14,8 @@
           compose
           make-parameter
           sub1)
+    (only chicken.module
+          export)
     (only chicken.string
           ->string
           string-split)
@@ -198,9 +180,11 @@
        (syntax-error "There must be at most one positional argument"))
 
       ((define-iv (name positional ...) key ...)
-       (define (name positional ... #!key (fields (*fields*)) (pretty? (*pretty?*)) (key #f) ...)
-         (let ((parms (filter-parms `((key . ,key) ...))))
-           (make-query-url 'name parms fields pretty? `(,positional ...)))))))
+       (begin
+         (export name)
+         (define (name positional ... #!key (fields (*fields*)) (pretty? (*pretty?*)) (key #f) ...)
+           (let ((parms (filter-parms `((key . ,key) ...))))
+             (make-query-url 'name parms fields pretty? `(,positional ...))))))))
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1stats
   (define-iv (stats))

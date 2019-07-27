@@ -2,26 +2,6 @@
   invidious.req.v1
   (
    sxml-read
-
-   annotations
-   captions
-   channels
-   channels/comments
-   channels/latest
-   channels/playlists
-   channels/search
-   channels/videos
-   comments
-   insights
-   mixes
-   playlists
-   popular
-   search
-   stats
-   suggestions
-   top
-   trending
-   videos
    )
 
   (import
@@ -36,6 +16,7 @@
     (only chicken.keyword
           string->keyword)
     (only chicken.module
+          export
           reexport)
     (only chicken.string
           ->string
@@ -85,18 +66,20 @@
        (syntax-error "There must be at most one positional argument"))
 
       ((define-iv default-reader (name positional ...) key ...)
-       (define (name positional ... #!key (reader default-reader) (fields (*fields*)) (pretty? (*pretty?*)) (key #f) ...)
-         ; TODO: Is there a better way to do this?
-         (let
-           ((uri
-              (call
-                'name
-                `(,positional
-                   ...
-                   #:fields ,fields
-                   #:pretty? ,pretty?
-                   ,@(append `(,(symbol->keyword 'key) ,key) ...)))))
-           (with-input-from-request uri #f reader))))))
+       (begin
+         (export name)
+         (define (name positional ... #!key (reader default-reader) (fields (*fields*)) (pretty? (*pretty?*)) (key #f) ...)
+           (let
+             ((uri
+                ; TODO: Is there a better way to do this?
+                (call
+                  'name
+                  `(,positional
+                     ...
+                     #:fields ,fields
+                     #:pretty? ,pretty?
+                     ,@(append `(,(symbol->keyword 'key) ,key) ...)))))
+             (with-input-from-request uri #f reader)))))))
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1stats
   (define-iv json-read (stats))
