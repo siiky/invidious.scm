@@ -2,7 +2,7 @@
 ((author "siiky")
  (license "unlicense")
  (synopsis "Invidious API for Scheme")
- (version "1.0.0")
+ (version "1.0.1")
  (dependencies
    http-client
    json

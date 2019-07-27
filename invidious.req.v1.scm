@@ -41,13 +41,12 @@
   (define (symbol->keyword s)
     (string->keyword (symbol->string s)))
 
-  ;; @brief Call the function named @a fun from module invidious.uri.v1 with
-  ;;     arguments @a args
-  ;; @param fun A symbol naming a function in the module invidious.uri.v1
-  ;; @param args A list of arguments for @a fun
-  ;; @returns The result of (apply fun args)
-  (define (call fun args)
-    (apply (eval fun (module-environment 'invidious.uri.v1)) args))
+  ;; @brief Get the procedure associated to symbol @a proc in module @a module
+  ;; @param proc A symbol naming a function in the module @a module
+  ;; @param module A symbol naming a module
+  ;; @returns The procedure with name @a proc from module @a module
+  (define (get-proc-with-name proc module)
+    (eval proc (module-environment module)))
 
   ;; @brief Read an XML structure from @a port and convert it to SXML
   ;; @param port A port to read XML from
@@ -76,18 +75,20 @@
       ((define-iv default-reader (name positional ...) key ...)
        (begin
          (export name)
-         (define (name positional ... #!key (reader default-reader) (fields (*fields*)) (pretty? (*pretty?*)) (key #f) ...)
-           (let
-             ((uri
-                ; TODO: Is there a better way to do this?
-                (call
-                  'name
-                  `(,positional
-                     ...
-                     #:fields ,fields
-                     #:pretty? ,pretty?
-                     ,@(append `(,(symbol->keyword 'key) ,key) ...)))))
-             (with-input-from-request uri #f reader)))))))
+         (define name
+           ; TODO: Is there a better way to do this?
+           (let ((iv:name (get-proc-with-name 'name 'invidious.uri.v1)))
+             (lambda (positional ... #!key (reader default-reader) (fields (*fields*)) (pretty? (*pretty?*)) (key #f) ...)
+               (let
+                 ((uri
+                    (apply
+                      iv:name
+                      `(,positional
+                         ...
+                         #:fields ,fields
+                         #:pretty? ,pretty?
+                         ,@(append `(,(symbol->keyword 'key) ,key) ...)))))
+                 (with-input-from-request uri #f reader)))))))))
 
   ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1stats
   (define-iv json-read (stats))
