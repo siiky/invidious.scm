@@ -35,6 +35,8 @@
           module-environment)
     (only chicken.keyword
           string->keyword)
+    (only chicken.module
+          reexport)
     (only chicken.string
           ->string
           string-split)
@@ -60,6 +62,13 @@
     (only invidious.uri.v1
           *fields*
           *pretty?*))
+
+  (reexport
+    (only invidious.uri.v1
+          *fields*
+          *host*
+          *pretty?*
+          *scheme*))
 
   (define (symbol->keyword s)
     (string->keyword (symbol->string s)))
