@@ -92,37 +92,45 @@
   (define (filter-parms parms)
     (filter cdr parms))
 
-  ;; @brief Appends all parameter lists into a single parameter list,
-  ;;        to make an URI
+  ;; @brief Appends all parameter lists into a single parameter list
   ;; @param parms Other parameters
   ;; @param fields-optional The list of fields
   ;; @param pretty? The pretty? flag
-  ;; @returns A parameter list, to make an URI
+  ;; @returns A parameter list
   (define (combine-parms parms fields-optional pretty?)
     (let ((fields-parm (optional-fields-parm fields-optional))
           (pretty?-parm (pretty?-parm pretty?)))
       (append pretty?-parm fields-parm parms)))
 
+  ;; @brief Convert a method name to a path
+  ;; @param sym The symbol representing the method
+  ;; @returns A (possibly empty) list of strings
   (define (method-symbol->path sym)
     (string-split (symbol->string sym) "/"))
 
+  ;; @brief Convert the positional argument (in a list) to a path
+  ;; @param positional The positional argument
+  ;; @returns A (possibly empty) list of strings
   (define (positional->path positional)
     (map ->string  positional))
 
+  ;; @brief Construct a path from the method name and the positional argument
+  ;; @param method The symbol representing the method
+  ;; @param positional The positional argument
+  ;; @returns The path for this method and positional argument
   (define (path method positional)
-    `(/ "api" "v1" ,@method ,@positional))
+    `(/ "api" "v1" ,@(method-symbol->path method) ,@(positional->path positional)))
 
-  ;; @brief Makes a complete query URL
-  ;; @param method-sym The method-sym request URL, made by concatenating
-  ;;     the instance URL, the API path and the method
+  ;; @brief Makes a complete query URI
+  ;; @param method-sym The method-sym request URI, made by concatenating
+  ;;     the instance URI, the API path and the method
   ;; @param parms The method specific parameters
   ;; @param fields The list of fields
   ;; @param pretty? The pretty? flag
-  ;; @returns A complete query URL
+  ;; @returns A complete query URI
   (define (make-query-url method-sym parms fields pretty? positional)
     (make-uri #:scheme (*scheme*)
-              #:path (path (method-symbol->path method-sym)
-                           (positional->path positional))
+              #:path (path method-sym positional)
               #:query (combine-parms parms fields pretty?)
               #:host (*host*)))
 
@@ -173,12 +181,12 @@
 
   ;; @brief Define an Invidious API call
   ;; @param name The name of the functions to define
-  ;; @param str The string to append to the API URL
+  ;; @param str The string to append to the API URI
   ;; @param keys The key parameters of the API call
   ;; @param positional One optional (one or none) positional argument
   ;;
   ;; Defines a function named @a name, that takes @a positional positional
-  ;; argument and @a keys key arguments, and returns a complete URL to make a
+  ;; argument and @a keys key arguments, and returns a complete URI to make a
   ;; request.
   ;;
   ;; Example:
