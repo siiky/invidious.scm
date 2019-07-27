@@ -1,5 +1,5 @@
 (module
-  invidious.v1
+  invidious.uri.v1
   (
    *fields*
    *host*
@@ -54,7 +54,7 @@
   ;;;
 
   ;; @brief Transform a list of fields into a parameter list, to
-  ;;        make an URI
+  ;;     make an URI
   ;; @param fields A list of fields
   ;; @returns A parameter list, to make an URI
   (define (fields-parm fields)
@@ -73,7 +73,7 @@
     (or fields '()))
 
   ;; @brief Transforms an optional field list into a parameter list,
-  ;;        make an URI
+  ;;     make an URI
   ;; @param fields #f or a list of fields
   ;; @returns A parameter list, to make an URI
   (define (optional-fields-parm fields)

@@ -9,10 +9,10 @@
    uri-common)
  (component-options (csc-options "-O0" "-d3"))
  (components
-   (extension invidious
-              (component-dependencies invidious.v1)
-              (modules invidious)
-              (source invidious.scm))
-   (extension invidious.v1
-              (modules invidious.v1)
-              (source invidious.v1.scm))))
+   (extension invidious.uri
+              (component-dependencies invidious.uri.v1)
+              (modules invidious.uri)
+              (source invidious.uri.scm))
+   (extension invidious.uri.v1
+              (modules invidious.uri.v1)
+              (source invidious.uri.v1.scm))))
