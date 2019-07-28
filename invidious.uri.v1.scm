@@ -5,6 +5,9 @@
    *host*
    *pretty?*
    *scheme*
+
+   instance
+   watch
    )
 
   (import
@@ -38,6 +41,8 @@
   ;;     make an URI
   ;; @param fields A list of fields
   ;; @returns A parameter list, to make an URI
+  (: fields-parm ((list-of (or symbol string))
+                  --> (or null (list (pair symbol string)))))
   (define (fields-parm fields)
     (if (null? fields)
         '()
@@ -45,7 +50,9 @@
 
   ;; @brief Clean an optional fields parameter
   ;; @param fields #f or a list of strings or symbols
-  ;; @param A (possibly empty) listp of strings or symbols
+  ;; @param A (possibly empty) list of strings or symbols
+  (: sanitize-optional-fields-parm ((or false (list-of (or symbol string)))
+                                    --> (list-of (or symbol string))))
   (define (sanitize-optional-fields-parm fields)
     (assert
       (or (not fields)
@@ -57,19 +64,23 @@
   ;;     make an URI
   ;; @param fields #f or a list of fields
   ;; @returns A parameter list, to make an URI
+  (: optional-fields-parm ((or false (list-of (or symbol string)))
+                           --> (or null (list (pair symbol string)))))
   (define (optional-fields-parm fields)
     (fields-parm (sanitize-optional-fields-parm fields)))
 
   ;; @brief Transform pretty? into a parameter list, make an URI
   ;; @param pretty? #f or non-#f
   ;; @returns '((pretty . 1)) or '()
+  (: pretty?-parm (boolean --> (or (list (pair symbol fixnum)) null)))
   (define (pretty?-parm pretty?)
     (if pretty? '((pretty . 1)) '()))
 
   ;; @brief Filter parameters not given
   ;; @param parms An alist of parameters
   ;; @returns A new alist (possibly empty) with the given parameters
-  (: filter-parms ((list-of (pair symbol (or false string))) --> (list-of (pair symbol string))))
+  (: filter-parms ((list-of (pair symbol (or false string integer)))
+                   --> (list-of (pair symbol string))))
   (define (filter-parms parms)
     (filter cdr parms))
 
@@ -78,6 +89,10 @@
   ;; @param fields-optional The list of fields
   ;; @param pretty? The pretty? flag
   ;; @returns A parameter list
+  (: combine-parms ((list-of (pair symbol string))
+                    (list-of string)
+                    boolean
+                    --> (list-of (pair symbol (or string integer)))))
   (define (combine-parms parms fields-optional pretty?)
     (let ((fields-parm (optional-fields-parm fields-optional))
           (pretty?-parm (pretty?-parm pretty?)))
@@ -85,20 +100,23 @@
 
   ;; @brief Convert a method name to a path
   ;; @param sym The symbol representing the method
-  ;; @returns A (possibly empty) list of strings
+  ;; @returns A list of strings
+  (: method-symbol->path (symbol --> (list-of string)))
   (define (method-symbol->path sym)
     (string-split (symbol->string sym) "/"))
 
   ;; @brief Convert the positional argument (in a list) to a path
   ;; @param positional The positional argument
   ;; @returns A (possibly empty) list of strings
+  (: positional->path ((list-of (or integer symbol string)) --> (list-of string)))
   (define (positional->path positional)
-    (map ->string  positional))
+    (map ->string positional))
 
   ;; @brief Construct a path from the method name and the positional argument
   ;; @param method The symbol representing the method
   ;; @param positional The positional argument
   ;; @returns The path for this method and positional argument
+  (: path (symbol string --> (list-of (or symbol string))))
   (define (path method positional)
     `(/ "api" "v1" ,@(method-symbol->path method) ,@(positional->path positional)))
 
@@ -123,6 +141,7 @@
   ;; @param type The expected type
   ;; @param type? Predicate for @a type
   ;; @param var The variable this assert is protecting
+  (: assert* (string (* -> boolean : 'a) string --> (procedure (*) 'a)))
   (define (assert* type type? var)
     (lambda (val)
       (assert (type? val) (string-append "`" var "` must be a " type))
@@ -130,20 +149,32 @@
 
   ;; @brief Pretty-print JSON response? (default is #f)
   ;; @see https://github.com/omarroth/invidious/wiki/API#pretty
+  (: *pretty?* (#!optional * -> boolean))
   (define *pretty?* (make-parameter #f (compose not not)))
 
   ;; @brief The fields of the response one is interested in (default is '())
   ;; @see https://github.com/omarroth/invidious/wiki/API#fields
   ;; @see https://developers.google.com/youtube/v3/getting-started#fields
+  (: *fields* (#!optional (or false (list-of (or symbol string))) -> (list-of (or symbol string))))
   (define *fields* (make-parameter '() sanitize-optional-fields-parm))
 
   ;; @brief The scheme to be used (HTTP/S) (default is HTTPS)
   ;; @see uri-common
+  (: *scheme* (#!optional symbol -> symbol))
   (define *scheme* (make-parameter 'https (assert* "symbol" symbol? "*scheme*")))
 
   ;; @brief The host of the instance to use (default is invidio.us)
   ;; @see https://github.com/omarroth/invidious/wiki/Invidious-Instances
+  (: *host* (#!optional string -> string))
   (define *host* (make-parameter "invidio.us" (assert* "string" string? "*host*")))
+
+  (: instance (--> string))
+  (define (instance)
+    (string-append (symbol->string (*scheme*)) "://" (*host*)))
+
+  (: watch (string --> string))
+  (define (watch id)
+    (string-append (instance) "/watch?v=" id))
 
   ;;;
   ;;; Method functions
@@ -181,6 +212,7 @@
       ((define-iv (name positional ...) key ...)
        (begin
          (export name)
+         (: name (#!rest (or boolean fixnum string symbol) -> 'uri))
          (define (name positional ... #!key (fields (*fields*)) (pretty? (*pretty?*)) (key #f) ...)
            (let ((parms (filter-parms `((key . ,key) ...))))
              (make-query-url 'name parms fields pretty? `(,positional ...))))))))

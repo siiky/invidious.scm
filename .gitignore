@@ -13,3 +13,4 @@
 *.link
 *.so
 *.static.o
+*.types

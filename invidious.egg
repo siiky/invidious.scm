@@ -2,7 +2,7 @@
 ((author "siiky")
  (license "unlicense")
  (synopsis "Invidious API for Scheme")
- (version "1.0.1")
+ (version "1.0.2")
  (dependencies
    http-client
    json
@@ -13,20 +13,24 @@
    uri-common)
  (components
    (extension invidious.req
+              (types-file)
               (component-dependencies invidious.req.v1)
               (modules invidious.req)
               (source invidious.req.scm))
 
    (extension invidious.req.v1
+              (types-file)
               (component-dependencies invidious.uri.v1)
               (modules invidious.req.v1)
               (source invidious.req.v1.scm))
 
    (extension invidious.uri
+              (types-file)
               (component-dependencies invidious.uri.v1)
               (modules invidious.uri)
               (source invidious.uri.scm))
 
    (extension invidious.uri.v1
+              (types-file)
               (modules invidious.uri.v1)
               (source invidious.uri.v1.scm))))

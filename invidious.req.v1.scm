@@ -38,6 +38,7 @@
           *scheme*))
 
   ;; @brief Convert a symbol to a keyword
+  (: symbol->keyword (symbol -> keyword))
   (define (symbol->keyword s)
     (string->keyword (symbol->string s)))
 
@@ -45,12 +46,14 @@
   ;; @param proc A symbol naming a function in the module @a module
   ;; @param module A symbol naming a module
   ;; @returns The procedure with name @a proc from module @a module
+  (: get-proc-with-name (symbol symbol -> (procedure (#!rest (or boolean fixnum string symbol)) 'uri)))
   (define (get-proc-with-name proc module)
     (eval proc (module-environment module)))
 
   ;; @brief Read an XML structure from @a port and convert it to SXML
   ;; @param port A port to read XML from
   ;; @returns SXML read from @a port
+  (: sxml-read (#!optional input-port -> list))
   (define (sxml-read #!optional (port (current-input-port)))
     (ssax:xml->sxml port '()))
 
@@ -75,6 +78,7 @@
       ((define-iv default-reader (name positional ...) key ...)
        (begin
          (export name)
+         (: name (#!rest (or boolean string symbol) -> list))
          (define name
            ; TODO: Is there a better way to do this?
            (let ((iv:name (get-proc-with-name 'name 'invidious.uri.v1)))
