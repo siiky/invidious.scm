@@ -15,6 +15,7 @@
     (only chicken.base
           assert
           compose
+          error
           make-parameter)
     (only chicken.module
           export)
@@ -172,9 +173,19 @@
   (define (instance)
     (string-append (symbol->string (*scheme*)) "://" (*host*)))
 
-  (: watch (string --> string))
-  (define (watch id)
-    (string-append (instance) "/watch?v=" id))
+  (: watch (string #!optional (or 'channel 'video 'playlist) --> string))
+  (define (watch id #!optional (type 'video))
+    (let ((path
+            (case type
+              ((video) "/watch?v=")
+              ((playlist) "/playlist?list=")
+              ((channel) "/channel/")
+              (else
+                (error
+                  'watch
+                  "Expected 'video, 'playlist or 'channel but got "
+                  type)))))
+      (string-append (instance) path id)))
 
   ;;;
   ;;; Method functions
