@@ -173,8 +173,8 @@
   (define (instance)
     (string-append (symbol->string (*scheme*)) "://" (*host*)))
 
-  (: watch (string #!optional (or 'channel 'video 'playlist) --> string))
-  (define (watch id #!optional (type 'video))
+  (: watch (string #!key (or 'channel 'video 'playlist) string --> string))
+  (define (watch id #!key (type 'video) (instance (instance)))
     (let ((path
             (case type
               ((video) "/watch?v=")
@@ -185,7 +185,7 @@
                   'watch
                   "Expected 'video, 'playlist or 'channel but got "
                   type)))))
-      (string-append (instance) path id)))
+      (string-append instance path id)))
 
   ;;;
   ;;; Method functions
