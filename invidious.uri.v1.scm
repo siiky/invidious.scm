@@ -149,12 +149,12 @@
       val))
 
   ;; @brief Pretty-print JSON response? (default is #f)
-  ;; @see https://github.com/omarroth/invidious/wiki/API#pretty
+  ;; @see https://github.com/iv-org/invidious/wiki/API#pretty
   (: *pretty?* (#!optional * -> boolean))
   (define *pretty?* (make-parameter #f (compose not not)))
 
   ;; @brief The fields of the response one is interested in (default is '())
-  ;; @see https://github.com/omarroth/invidious/wiki/API#fields
+  ;; @see https://github.com/iv-org/invidious/wiki/API#fields
   ;; @see https://developers.google.com/youtube/v3/getting-started#fields
   (: *fields* (#!optional (or false (list-of (or symbol string))) -> (list-of (or symbol string))))
   (define *fields* (make-parameter '() sanitize-optional-fields-parm))
@@ -164,10 +164,14 @@
   (: *scheme* (#!optional symbol -> symbol))
   (define *scheme* (make-parameter 'https (assert* "symbol" symbol? "*scheme*")))
 
-  ;; @brief The host of the instance to use (default is invidio.us)
-  ;; @see https://github.com/omarroth/invidious/wiki/Invidious-Instances
+  ;; @brief The host of the instance to use (default is invidious.snopyta.org)
+  ;; @see https://github.com/iv-org/invidious/wiki/Invidious-Instances
+  ;;
+  ;; NOTE: invidio.us is no longer active. I've tried a few instances recently,
+  ;; and invidious.snopyta.org seems to be pretty stable, is hosted on Finland,
+  ;; and is open for non-browser requests -- unlike some other instances :/
   (: *host* (#!optional string -> string))
-  (define *host* (make-parameter "invidio.us" (assert* "string" string? "*host*")))
+  (define *host* (make-parameter "invidious.snopyta.org" (assert* "string" string? "*host*")))
 
   (: instance (--> string))
   (define (instance)
@@ -228,60 +232,60 @@
            (let ((parms (filter-parms `((key . ,key) ...))))
              (make-query-url 'name parms fields pretty? `(,positional ...))))))))
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1stats
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1stats
   (define-iv (stats))
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1videosid
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1videosid
   (define-iv (videos id) region)
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1annotationsid
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1annotationsid
   (define-iv (annotations id) source)
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1commentsid
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1commentsid
   (define-iv (comments id) sort_by source continuation)
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1insightsid
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1insightsid
   (define-iv (insights))
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1captionsid
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1captionsid
   (define-iv (captions id) label lang tlang region)
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1trending
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1trending
   (define-iv (trending) type region)
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1top
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1top
   (define-iv (top))
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1popular
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1popular
   (define-iv (popular))
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelsucid
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1channelsucid
   (define-iv (channels ucid) sort_by)
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelsucidvideos-apiv1channelsvideosucid
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1channelsucidvideos-apiv1channelsvideosucid
   (define-iv (channels/videos ucid) page sort_by)
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelsucidlatest-apiv1channelslatestucid
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1channelsucidlatest-apiv1channelslatestucid
   (define-iv (channels/latest))
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelsplaylistsucid-apiv1channelsucidplaylists
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1channelsplaylistsucid-apiv1channelsucidplaylists
   (define-iv (channels/playlists ucid) continuation sort_by)
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelscommentsucid-apiv1channelsucidcomments
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1channelscommentsucid-apiv1channelsucidcomments
   (define-iv (channels/comments ucid) continuation)
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1channelssearchucid
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1channelssearchucid
   (define-iv (channels/search ucid) q page)
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1searchsuggestions
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1searchsuggestions
   (define-iv (suggestions) q)
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1search
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1search
   (define-iv (search) q page sort_by date duration type features region)
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1playlistsplid
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1playlistsplid
   (define-iv (playlists plid) page)
 
-  ;; @see https://github.com/omarroth/invidious/wiki/API#get-apiv1mixesrdid
+  ;; @see https://github.com/iv-org/invidious/wiki/API#get-apiv1mixesrdid
   (define-iv (mixes rdid))
   )
