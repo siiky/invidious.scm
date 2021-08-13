@@ -2,6 +2,7 @@
   invidious.req.v1
   (
    sxml-read
+   instances
    )
 
   (import
@@ -26,9 +27,12 @@
     openssl)
 
   (import
-    (only invidious.uri.v1
-          *fields*
-          *pretty?*))
+    (rename
+      (only invidious.uri.v1
+            *fields*
+            *pretty?*
+            instances)
+      (instances iv:uri:instances)))
 
   (reexport
     (only invidious.uri.v1
@@ -46,6 +50,7 @@
   ;; @param proc A symbol naming a function in the module @a module
   ;; @param module A symbol naming a module
   ;; @returns The procedure with name @a proc from module @a module
+  ; TODO: Fix the URI return type.
   (: get-proc-with-name (symbol symbol -> (procedure (#!rest (or boolean fixnum string symbol)) 'uri)))
   (define (get-proc-with-name proc module)
     (eval proc (module-environment module)))
@@ -56,6 +61,15 @@
   (: sxml-read (#!optional input-port -> list))
   (define (sxml-read #!optional (port (current-input-port)))
     (ssax:xml->sxml port '()))
+
+  ;; @brief Get the list of Invidious instances registered at invidious.io.
+  ;; @param sort-by Corresponds to the endpoint's `sort_by` query parameter.
+  ;;                Defaults to `health`.
+  ;; @returns JSON read from the reply.
+  (: instances (#!key string -> list))
+  (define (instances #!key (sort-by "health"))
+    (let ((uri (iv:uri:instances sort-by)))
+      (with-input-from-request uri #f json-read)))
 
   ;; @brief Define an Invidious API call
   ;; @param default-reader The default reader procedure for with-input-from-request
