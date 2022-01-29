@@ -196,7 +196,7 @@
   ;; @param sort-by Corresponds to the endpoint's `sort_by` query parameter.
   ;;                Defaults to `health`.
   ;; @returns The URI.
-  ; TODO: How to specify the URI return type? `(string uri)` compiles, but is
+  ; TODO: How to specify the URI return type? `(struct uri)` compiles but, is
   ;       it right?
   (: instances (#!key string --> (struct uri)))
   (define (instances #!key (sort-by "health"))

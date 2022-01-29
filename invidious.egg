@@ -2,13 +2,14 @@
 ((author "siiky")
  (license "unlicense")
  (synopsis "Invidious API for Scheme")
- (version "1.3.0")
+ (version "2.0.0")
  (dependencies
    http-client
-   json
+   medea
    openssl
    srfi-1
    srfi-13
+   srfi-197
    ssax
    uri-common)
  (components
